@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,jsx}",
@@ -9,4 +9,4 @@ export default {
   },
   plugins: [],
   important: '#root', // This ensures Tailwind styles can override Material-UI
-}
+} 

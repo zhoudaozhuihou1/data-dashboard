@@ -6,7 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import { store } from './redux/store'
 import theme from './theme'
 import './index.css'
-import App from './App'
+import App from './App.js'
 
 ReactDOM.render(
   <React.StrictMode>
