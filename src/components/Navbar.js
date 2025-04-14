@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Tabs, Tab, AppBar, Box, Menu, MenuItem, Paper, Grid, Typography, Divider, Fade } from '@mui/material';
+import { Tabs, Tab, AppBar, Box, Paper, Grid, Typography, Divider, Fade, Popper } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -260,19 +260,14 @@ const Navbar = (props) => {
             console.log('Tab onChange event, value:', newValue);
             setValue(newValue);
             navigate(newValue);
-            // 不再关闭菜单，保持菜单打开状态
           }}
           indicatorColor="primary"
           textColor="primary"
           className="min-h-[64px] px-4"
           TabIndicatorProps={{ style: { display: 'none' } }}
           onMouseMove={(e) => {
-            // 检测鼠标在tabs区域内的移动
-            // 这有助于捕获tab之间的快速移动
             const tabsElement = tabsRef.current;
             if (tabsElement && menuAnchor) {
-              // 菜单已打开且鼠标在tabs区域移动
-              // 这里不做具体处理，tab各自的onMouseEnter/onMouseOver会处理
               console.log('Mouse moving in tabs area');
             }
           }}
@@ -300,64 +295,69 @@ const Navbar = (props) => {
           ))}
         </Tabs>
 
-        <Menu
-          id="mega-menu"
-          anchorEl={menuAnchor}
-          keepMounted
+        <Popper
           open={Boolean(menuAnchor)}
-          onClose={() => {
-            setMenuAnchor(null);
-            setActiveTab(null);
-          }}
-          onMouseEnter={() => {
-            // 清除可能存在的关闭菜单的timeout
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-              timeoutRef.current = null;
-            }
-          }}
-          onMouseLeave={(event) => {
-            // 菜单区域鼠标离开，添加延迟关闭
-            const timeout = setTimeout(() => {
-              setMenuAnchor(null);
-              setActiveTab(null);
-            }, menuDelay);
-            timeoutRef.current = timeout;
-          }}
-          PaperProps={{
-            elevation: 2,
-            sx: {
-              mt: 0,
-              width: '100vw',
-              maxWidth: '100%',
-              left: '0 !important',
-              right: '0 !important',
-              borderRadius: 0,
-              padding: '20px 0',
-              boxShadow: '0 6px 16px -8px rgba(0,0,0,0.08), 0 9px 28px 0 rgba(0,0,0,0.05)',
-              borderTop: '1px solid #f0f0f0',
-              transition: 'box-shadow 0.2s ease-in-out, transform 0.15s ease-out',
-              overflow: 'hidden'
-            }
-          }}
-          MenuListProps={{
-            style: { padding: 0 }
-          }}
-          disablePortal={false}
-          disableScrollLock={false}
-          disableAutoFocus={true}
-          disableEnforceFocus={true}
-          style={{ marginTop: '0' }}
-          TransitionComponent={Fade}
-          transitionDuration={150}
+          anchorEl={menuAnchor}
+          placement="bottom-start"
+          transition
+          style={{ zIndex: 1300 }}
+          modifiers={[
+            {
+              name: 'offset',
+              options: {
+                offset: [0, 0], // 调整Popper的位置，确保不遮挡tab
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 8,
+              },
+            },
+          ]}
         >
-          {activeTab && <MenuContent 
-            activeTab={activeTab} 
-            menuItems={menuItems} 
-            categoriesMap={categoriesMap}
-            handleMenuItemClick={handleMenuItemClick} 
-          />}
-        </Menu>
+          {({ TransitionProps }) => (
+            <Fade {...TransitionProps} timeout={150}>
+              <Paper
+                elevation={2}
+                sx={{
+                  width: '100vw',
+                  maxWidth: '100%',
+                  borderRadius: 0,
+                  padding: '20px 0',
+                  boxShadow: '0 6px 16px -8px rgba(0,0,0,0.08), 0 9px 28px 0 rgba(0,0,0,0.05)',
+                  borderTop: '1px solid #f0f0f0',
+                  transition: 'box-shadow 0.2s ease-in-out, transform 0.15s ease-out',
+                  overflow: 'hidden',
+                  mt: 0,
+                }}
+                onMouseEnter={() => {
+                  if (timeoutRef.current) {
+                    clearTimeout(timeoutRef.current);
+                    timeoutRef.current = null;
+                  }
+                }}
+                onMouseLeave={(event) => {
+                  const timeout = setTimeout(() => {
+                    setMenuAnchor(null);
+                    setActiveTab(null);
+                  }, menuDelay);
+                  timeoutRef.current = timeout;
+                }}
+              >
+                {activeTab && (
+                  <MenuContent 
+                    activeTab={activeTab} 
+                    menuItems={menuItems} 
+                    categoriesMap={categoriesMap}
+                    handleMenuItemClick={handleMenuItemClick} 
+                  />
+                )}
+              </Paper>
+            </Fade>
+          )}
+        </Popper>
       </Box>
     </AppBar>
   );
